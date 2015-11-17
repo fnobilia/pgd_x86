@@ -18,7 +18,7 @@
 
 #define AUDIT_ADDRESS if(0)
 
-void walk_table(int level, void **table);
+void walk_table(int level, int index_parent, void **table);
 void manage_entry(int level, int index,void *entry);
 
 void manage_entry(int level, int index,void *entry){
@@ -55,10 +55,10 @@ void manage_entry(int level, int index,void *entry){
 	
 	if(level == 3)	return;
 
-	walk_table(level+1,real_address_va);
+	walk_table(level+1,index,real_address_va);
 }
 
-void walk_table(int level, void **table){
+void walk_table(int level, int index_parent, void **table){
         int index;
         int first_null;
 	int busy;
@@ -92,7 +92,7 @@ void walk_table(int level, void **table){
                         count = 512;
                         break;
                 case 3:
-                        count = 512;
+                        count = 0;
                         break;
         }
 	
@@ -121,29 +121,31 @@ void walk_table(int level, void **table){
 		else free++;
         }
 	
-	switch(level){
-                case 0:
-                        printk(KERN_ERR "[PML4_BUSY]: %d\n",busy);
-		        printk(KERN_ERR "[PML4_FREE]: %d\n",free);
-			break;
-                case 1:
-              		printk(KERN_ERR "\t[PDPT_BUSY]: %d\n",busy);
-                        printk(KERN_ERR "\t[PDPT_FREE]: %d\n",free);
-                        break;  
-		case 2:
-                        printk(KERN_ERR "\t\t[PD_BUSY]: %d\n",busy);
-                        printk(KERN_ERR "\t\t[PD_FREE]: %d\n",free);
-                        break;
-                case 3:
-                        printk(KERN_ERR "\t\t\t[PT_BUSY]: %d\n",busy);
-                        printk(KERN_ERR "\t\t\t[PT_FREE]: %d\n",free);
-                        break;
-        }
+	if(count != 0){	
+		switch(level){
+                	case 0:
+                        	printk(KERN_ERR "[PML4E_BUSY]: %d\n",busy);
+		        	printk(KERN_ERR "[PML4E_FREE]: %d\n",free);
+				break;
+                	case 1:
+              			printk(KERN_ERR "\t\t\t (%d)[PDPTE_BUSY]: %d\n",index_parent,busy);
+                        	printk(KERN_ERR "\t\t\t (%d)[PDPTE_FREE]: %d\n",index_parent,free);
+                       		 break;  
+			case 2:
+                        	printk(KERN_ERR "\t\t\t\t\t\t (%d)[PDE_BUSY]: %d\n",index_parent,busy);
+                        	printk(KERN_ERR "\t\t\t\t\t\t (%d)[PDE_FREE]: %d\n",index_parent,free);
+                        	break;
+                	case 3:
+                       	 	printk(KERN_ERR "\t\t\t\t\t\t\t\t (%d)[PTE_BUSY]: %d\n",index_parent,busy);
+                        	printk(KERN_ERR "\t\t\t\t\t\t\t\t (%d)[PTE_FREE]: %d\n",index_parent,free);
+                       	 	break;
+        	}
+	}
 	
 }
 
 int init_module(void){ 
-	walk_table(0,current->mm->pgd);
+	walk_table(0,0,current->mm->pgd);
 	return 0;
 }
 
