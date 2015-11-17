@@ -11,10 +11,15 @@
 #include <asm/pgtable.h>
 #include <asm/uaccess.h>
 
-#define AUDIT_ENTRY_PML4 if(0)
+#define AUDIT_ENTRY_PML4E if(0)
 #define AUDIT_ENTRY_PDPTE if(0)
 #define AUDIT_ENTRY_PDE if(0)
 #define AUDIT_ENTRY_PTE if(1)
+
+#define AUDIT_RESULT_PML4E if(1)
+#define AUDIT_RESULT_PDPTE if(1)
+#define AUDIT_RESULT_PDE if(1)
+#define AUDIT_RESULT_PTE if(0)
 
 #define AUDIT_ADDRESS if(0)
 
@@ -36,8 +41,8 @@ void manage_entry(int level, int index,void *entry){
 	
 	switch(level){
 		case 0:
-	        	AUDIT_ENTRY_PML4 printk(KERN_ERR "\tPML4E_%d: %p \t Address:%p \t Control_bit:%p\n",index,entry,address,control_bit);
-			AUDIT_ENTRY_PML4 printk(KERN_ERR "\t\t\t\t\t PA:%p \t\t VA:%p\n",real_address_pa,real_address_va);
+	        	AUDIT_ENTRY_PML4E printk(KERN_ERR "\tPML4E_%d: %p \t Address:%p \t Control_bit:%p\n",index,entry,address,control_bit);
+			AUDIT_ENTRY_PML4E printk(KERN_ERR "\t\t\t\t\t PA:%p \t\t VA:%p\n",real_address_pa,real_address_va);
 			break;
 		case 1:
 	        	AUDIT_ENTRY_PDPTE printk(KERN_ERR "\t\tPDPTE_%d: %p \t Address:%p \t Control_bit:%p\n",index,entry,address,control_bit);
@@ -121,25 +126,23 @@ void walk_table(int level, int index_parent, void **table){
 		else free++;
         }
 	
-	if(count != 0){	
-		switch(level){
-                	case 0:
-                        	printk(KERN_ERR "[PML4E_BUSY]: %d\n",busy);
-		        	printk(KERN_ERR "[PML4E_FREE]: %d\n",free);
-				break;
-                	case 1:
-              			printk(KERN_ERR "\t\t\t (%d)[PDPTE_BUSY]: %d\n",index_parent,busy);
-                        	printk(KERN_ERR "\t\t\t (%d)[PDPTE_FREE]: %d\n",index_parent,free);
-                       		 break;  
-			case 2:
-                        	printk(KERN_ERR "\t\t\t\t\t\t (%d)[PDE_BUSY]: %d\n",index_parent,busy);
-                        	printk(KERN_ERR "\t\t\t\t\t\t (%d)[PDE_FREE]: %d\n",index_parent,free);
-                        	break;
-                	case 3:
-                       	 	printk(KERN_ERR "\t\t\t\t\t\t\t\t (%d)[PTE_BUSY]: %d\n",index_parent,busy);
-                        	printk(KERN_ERR "\t\t\t\t\t\t\t\t (%d)[PTE_FREE]: %d\n",index_parent,free);
-                       	 	break;
-        	}
+	switch(level){
+		case 0:
+			AUDIT_RESULT_PML4E printk(KERN_ERR "[PML4E_BUSY]: %d\n",busy);
+			AUDIT_RESULT_PML4E printk(KERN_ERR "[PML4E_FREE]: %d\n",free);
+			break;
+		case 1:
+			AUDIT_RESULT_PDPTE printk(KERN_ERR "\t\t\t (%d)[PDPTE_BUSY]: %d\n",index_parent,busy);
+			AUDIT_RESULT_PDPTE printk(KERN_ERR "\t\t\t (%d)[PDPTE_FREE]: %d\n",index_parent,free);
+			break;  
+		case 2:
+			AUDIT_RESULT_PDE printk(KERN_ERR "\t\t\t\t\t\t (%d)[PDE_BUSY]: %d\n",index_parent,busy);
+			AUDIT_RESULT_PDE printk(KERN_ERR "\t\t\t\t\t\t (%d)[PDE_FREE]: %d\n",index_parent,free);
+			break;
+		case 3:
+			AUDIT_RESULT_PTE printk(KERN_ERR "\t\t\t\t\t\t\t\t (%d)[PTE_BUSY]: %d\n",index_parent,busy);
+			AUDIT_RESULT_PTE printk(KERN_ERR "\t\t\t\t\t\t\t\t (%d)[PTE_FREE]: %d\n",index_parent,free);
+			break;
 	}
 	
 }
